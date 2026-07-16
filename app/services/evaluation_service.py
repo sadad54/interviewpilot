@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Any, cast
 from groq import Groq
 from pydantic import ValidationError
 from app.schemas.evaluation import EvaluationResult
@@ -56,11 +57,13 @@ def evaluate_response(client: Groq, question_text: str, answer_text: str) -> Eva
     for attempt in range(1, MAX_RETRIES + 2):  # initial attempt + MAX_RETRIES repairs
         completion = client.chat.completions.create(
             model=EVAL_MODEL,
-            messages=messages,
+            messages=cast(Any, messages),
             temperature=0.2,
             response_format={"type": "json_object"},
         )
-        raw_content = completion.choices[0].message.content or ""
+        raw_content = completion.choices[0].message.content
+        if raw_content is None or raw_content.strip() == "":
+            raise ValueError("Evaluation model returned empty content")
 
         try:
             parsed = json.loads(raw_content)

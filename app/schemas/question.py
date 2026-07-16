@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class QuestionOut(BaseModel):
     id: int
@@ -7,5 +7,4 @@ class QuestionOut(BaseModel):
     difficulty: str
     text: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

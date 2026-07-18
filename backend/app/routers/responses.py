@@ -67,8 +67,8 @@ async def submit_audio_response(
     db.refresh(response)
     return response
 
-@router.post("{/response_id}/follow-up")
-def get_follow_up(response_id:int, db:DBSession = Depends(get_db) ):
+@router.post("/{response_id}/follow-up")
+def get_follow_up(response_id: int, db: DBSession = Depends(get_db)):
     response = db.query(Response).filter(Response.id==response_id).first()
     if not response:
         raise HTTPException(status_code=404, detail="Response not found")

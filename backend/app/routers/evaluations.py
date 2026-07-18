@@ -42,3 +42,9 @@ def create_evaluation(response_id: int, db: DBSession = Depends(get_db)):
     db.commit()
     db.refresh(evaluation)
     return evaluation
+@router.get("/response/{response_id}", response_model=EvaluationOut)
+def get_evaluation_by_response(response_id: int, db: DBSession = Depends(get_db)):
+    evaluation = db.query(Evaluation).filter(Evaluation.response_id == response_id).first()
+    if not evaluation:
+        raise HTTPException(status_code=404, detail="Evaluation not found for this response")
+    return evaluation

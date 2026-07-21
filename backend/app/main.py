@@ -1,18 +1,19 @@
+import logging
+
 from fastapi import FastAPI
-from app.core.database import engine, Base
-from app import models
-from app.routers import questions, responses, sessions , evaluations
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.config import settings
+from app.routers import evaluations, questions, responses, sessions
 
-# Create all tables
-Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="InterviewPilpot API")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+
+app = FastAPI(title="InterviewPilot API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

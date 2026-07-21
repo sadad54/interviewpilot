@@ -3,7 +3,8 @@ def test_create_session(client):
     assert response.status_code == 200
     data = response.json()
     assert data["role"] == "AI Engineer"
-    assert data["status"] == "in_progress"
+    assert data["status"] == "created"
+    assert data["public_id"]
     assert "id" in data
 
 

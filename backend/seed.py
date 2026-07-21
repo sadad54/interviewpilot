@@ -1,20 +1,38 @@
 from app.core.database import SessionLocal
 from app.models.question import Question
+from app.services.interview_service import QUESTION_CATALOG
 
-db = SessionLocal()
 
-questions =  [
-    Question(role="Data Scientist", topic="Statistics", difficulty="easy",
-             text="Explain the difference between Type I and Type II error."),
-    Question(role="Data Scientist", topic="ML", difficulty="medium",
-             text="Why would you choose PR-AUC over ROC-AUC for an imbalanced dataset?"),
-    Question(role="AI Engineer", topic="System Design", difficulty="medium",
-             text="How would you design a RAG pipeline to reduce hallucination?"),
-    Question(role="AI Engineer", topic="Behavioral", difficulty="easy",
-             text="Tell me about a time you had to debug a production issue under time pressure."),
-]
+def seed_question_bank():
+    db = SessionLocal()
+    created = 0
+    try:
+        for role, questions in QUESTION_CATALOG.items():
+            for competency, topic, text in questions:
+                exists = db.query(Question).filter(
+                    Question.role == role,
+                    Question.text == text,
+                    Question.is_template.is_(True),
+                ).first()
+                if exists:
+                    exists.competency = competency
+                    exists.topic = topic
+                    continue
+                db.add(Question(
+                    role=role,
+                    topic=topic,
+                    difficulty="medium",
+                    text=text,
+                    is_template=True,
+                    kind="primary",
+                    competency=competency,
+                ))
+                created += 1
+        db.commit()
+    finally:
+        db.close()
+    print(f"Question bank ready. Added {created} templates.")
 
-db.add_all(questions)
-db.commit()
-db.close()
-print(f"Seeded {len(questions)} questions into the database.")
+
+if __name__ == "__main__":
+    seed_question_bank()

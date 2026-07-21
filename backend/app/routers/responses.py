@@ -25,7 +25,9 @@ def submit_response(payload: ResponseCreate, db: DBSession = Depends(get_db)):
     response = Response(
         session_id=payload.session_id,
         question_id=payload.question_id,
-        answer_text=payload.answer_text
+        answer_text=payload.answer_text,
+        client_request_id=payload.client_request_id,
+        answer_mode="text",
     )
     db.add(response)
     db.commit()
@@ -61,7 +63,7 @@ async def submit_audio_response(
     if not transcribed_text:
         raise HTTPException(status_code=422, detail="Transcriptionr returned empty text")
     
-    response = Response(session_id=session_id, question_id=question_id, answer_text=transcribed_text)
+    response = Response(session_id=session_id, question_id=question_id, answer_text=transcribed_text, answer_mode="audio")
     db.add(response)
     db.commit()
     db.refresh(response)

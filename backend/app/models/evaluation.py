@@ -10,5 +10,10 @@ class Evaluation(Base):
     overall_score = Column(Float, nullable=False)     # 0-10 scale
     criteria_scores = Column(JSON, nullable=False)    # {"clarity": 8, "technical_accuracy": 7, "structure": 6}
     feedback = Column(Text, nullable=False)
+    next_action = Column(Text, nullable=True)
+    strengths = Column(JSON, nullable=False, default=list)
+    gaps = Column(JSON, nullable=False, default=list)
+    confidence = Column(Float, nullable=True)
+    decision_summary = Column(Text, nullable=True)
 
     response = relationship("Response", back_populates="evaluation")

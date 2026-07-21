@@ -7,8 +7,15 @@ from fastapi.testclient import TestClient
 from app.core.database import Base, get_db
 from app.main import app
 from app.models.question import Question
+from app.core.config import settings
 
 TEST_DATABASE_URL = "sqlite:///:memory:"
+
+
+@pytest.fixture(autouse=True)
+def disable_live_ai(monkeypatch):
+    """Backend tests must be deterministic and never call an external model."""
+    monkeypatch.setattr(settings, "groq_api_key", None)
 
 engine = create_engine(
     TEST_DATABASE_URL,

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 class CriteriaScores(BaseModel):
     technical_accuracy:int = Field(ge=0, le=10)
@@ -17,6 +17,10 @@ class EvaluationOut(BaseModel):
     overall_score: float
     criteria_scores: dict
     feedback: str
+    next_action: str | None = None
+    strengths: list[str] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
+    confidence: float | None = None
+    decision_summary: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

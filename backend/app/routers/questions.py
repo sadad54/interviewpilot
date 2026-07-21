@@ -8,7 +8,7 @@ router = APIRouter(prefix="/questions", tags=["questions"])
 
 @router.get("/", response_model=list[QuestionOut])
 def list_questions(role: str | None = Query(default=None), db: DBSession = Depends(get_db)):
-    query = db.query(Question)
+    query = db.query(Question).filter(Question.is_template.is_(True))
     if role:
         query = query.filter(Question.role == role)
     return query.all()

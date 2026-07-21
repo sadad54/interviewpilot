@@ -1,63 +1,166 @@
 # InterviewPilot
 
-InterviewPilot is a bounded, stateful AI interviewer for realistic technical mock interviews. It plans a competency-balanced session, adapts with targeted probes, persists the complete transcript, and produces an evidence-backed report only after the interview ends.
+InterviewPilot is a full-stack mock interview platform that simulates realistic technical interviews with AI-assisted planning, adaptive follow-up questions, persistent session state, and structured post-interview reporting.
 
-## Agentic architecture
+It is designed as a portfolio-grade project that demonstrates how to combine a modern FastAPI backend, a React frontend, and LLM-based reasoning into a cohesive product experience.
+
+## What this project does
+
+InterviewPilot lets a candidate go through a structured interview flow where:
+
+- a session is created and planned around competency areas
+- the interviewer asks primary questions and can probe deeper when answers are weak
+- responses are stored as part of a persistent transcript
+- the system generates an evidence-backed report at the end of the interview
+- the report can be shared for review
+
+This makes the project feel more like a real product than a simple chatbot demo because it preserves state across turns and supports a complete interview lifecycle.
+
+## Key features
+
+- Stateful interview sessions with resumable progress
+- AI-powered planning and question adaptation using Groq
+- Follow-up question selection based on answer quality
+- Text and audio answer support
+- Transcript persistence and structured evaluation
+- Shareable interview reports
+- Deterministic fallbacks so the experience remains usable without an API key
+- Docker support for backend containerization
+
+## Tech stack
+
+### Backend
+- FastAPI
+- SQLAlchemy
+- Alembic
+- Pydantic / Pydantic Settings
+- Uvicorn
+- Groq API client
+
+### Frontend
+- React
+- TypeScript
+- Vite
+- React Router
+- Axios
+
+### Data
+- SQLite by default for local development
+- PostgreSQL-compatible configuration through environment variables
+
+## Architecture overview
 
 ```mermaid
 stateDiagram-v2
     [*] --> Created
-    Created --> Planning: POST /sessions/{public_id}/start
-    Planning --> InProgress: validated five-question plan
-    InProgress --> Probe: answer lacks supporting depth
-    Probe --> InProgress: follow-up answer recorded
-    InProgress --> InProgress: advance to next primary question
-    InProgress --> Completed: fifth primary path completes
-    InProgress --> Completed: candidate finishes early
-    Completed --> Report: aggregate transcript evidence
+    Created --> Planning: start interview
+    Planning --> InProgress: session plan ready
+    InProgress --> Probe: answer needs more depth
+    Probe --> InProgress: follow-up recorded
+    InProgress --> InProgress: move to next primary question
+    InProgress --> Completed: interview ends
+    Completed --> Report: generate evidence-backed report
 ```
 
-The workflow deliberately separates responsibilities:
+## Getting started
 
-1. **Interview planner** grounds five competency slots in a curated bank, then adapts them to role, seniority, and an optional job description.
-2. **Interviewer policy** observes each answer and chooses one bounded action: probe, advance, or complete. Each primary question can produce at most one follow-up.
-3. **Turn evaluator** stores private structured scores and safe decision summaries. Mid-interview coaching remains hidden.
-4. **Report generator** aggregates competency scores and cites persisted transcript turns as evidence.
+### Prerequisites
 
-Every session, generated prompt, response, probe, decision, and report is persisted. Model failures fall back to deterministic planning, evaluation, and advancement rules so session state remains valid. Logs use session/question correlation identifiers but never record private model reasoning.
+- Python 3.11+
+- Node.js 18+
+- npm or pnpm
+- Optional: a Groq API key for AI-powered features
 
-### Example sanitized audit trail
+### 1. Clone the repository
 
-```json
-{
-  "session": "7af...",
-  "planned_competencies": ["technical_depth", "system_design", "problem_solving", "trade_offs", "behavioral_communication"],
-  "turn": 2,
-  "question_kind": "primary",
-  "decision": "probe",
-  "decision_summary": "A targeted probe was selected because the answer needs more supporting detail.",
-  "confidence": 0.65
-}
+```powershell
+git clone https://github.com/<your-username>/interviewpilot.git
+cd interviewpilot
 ```
 
-## Local development
+### 2. Backend setup
 
 ```powershell
 cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+```
+
+Create a `.env` file in the backend folder with the following variables:
+
+```env
+GROQ_API_KEY=your_groq_api_key
+DATABASE_URL=sqlite:///./interviewpilot.db
+```
+
+If you do not provide a Groq key, the app will still support text interviews through deterministic fallback logic.
+
+Run the database migrations and seed the local database:
+
+```powershell
 alembic upgrade head
 python seed.py
+```
+
+Start the backend server:
+
+```powershell
 uvicorn app.main:app --reload
 ```
 
+The API will be available at:
+
+- http://localhost:8000/docs
+- http://localhost:8000/health
+
+### 3. Frontend setup
+
 ```powershell
-cd frontend
+cd ../frontend
 npm install
 npm run dev
 ```
 
-Configure `GROQ_API_KEY` to enable AI planning, evaluation, follow-up selection, and audio transcription. Without it, text interviews remain fully usable through deterministic fallbacks. Set `DATABASE_URL` to a Postgres URL for hosted deployments; SQLite remains the local default.
+Open http://localhost:5173 to view the application.
 
-## Compatibility
+## Docker (optional)
 
-The original `/questions`, `/responses`, `/evaluations`, and `/responses/{response_id}/follow-up` endpoints remain available. The session-oriented API adds planning, resumable state, idempotent answers, early completion, and shareable reports without replacing the original data relationships.
+You can also run the backend in a container:
+
+```powershell
+cd backend
+docker build -t interviewpilot-backend .
+docker run -p 8000:8000 --env-file .env interviewpilot-backend
+```
+
+## Project structure
+
+```text
+backend/
+  app/
+    core/           # config, database, app wiring
+    models/         # SQLAlchemy models
+    routers/        # FastAPI endpoints
+    schemas/        # request/response schemas
+    services/       # interview planning, evaluation, transcription
+  alembic/          # database migrations
+  tests/           # backend test suite
+
+frontend/
+  src/
+    components/    # reusable UI components
+    pages/         # interview flow pages
+    api/           # frontend API client
+```
+
+## Why this is a strong portfolio project
+
+InterviewPilot demonstrates several practical engineering skills:
+
+- building a full-stack application end to end
+- designing stateful workflows instead of simple one-shot prompts
+- integrating external APIs into a production-style backend
+- structuring a backend around services, schemas, and persistence
+- creating a polished user experience for a complex multi-step interaction
+

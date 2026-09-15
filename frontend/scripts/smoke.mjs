@@ -11,6 +11,7 @@ try {
   await page.waitForURL('**/mock-interview/**');
   await page.locator('.live-answer textarea').fill('I would measure retrieval quality using a held-out dataset and investigate failure cases.');
   await page.getByRole('button', { name: 'Submit answer' }).click();
+  await page.locator('.spine-transcript details summary').first().click();
   await page.getByText(/Demo heuristic score/).first().waitFor();
   await page.screenshot({ path: 'screenshots/demo-interview.png', fullPage: true });
   page.on('dialog', dialog => dialog.accept());

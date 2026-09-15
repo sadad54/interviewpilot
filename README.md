@@ -67,14 +67,14 @@ stateDiagram-v2
 ### Prerequisites
 
 - Python 3.11+
-- Node.js 18+
+- Node.js 22+
 - npm or pnpm
 - Optional: a Groq API key for AI-powered features
 
 ### 1. Clone the repository
 
 ```powershell
-git clone https://github.com/<your-username>/interviewpilot.git
+git clone https://github.com/sadad54/interviewpilot.git
 cd interviewpilot
 ```
 
@@ -118,7 +118,7 @@ The API will be available at:
 
 ```powershell
 cd ../frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -164,3 +164,30 @@ InterviewPilot demonstrates several practical engineering skills:
 - structuring a backend around services, schemas, and persistence
 - creating a polished user experience for a complex multi-step interaction
 
+
+
+## Verification and demo limitations
+
+The backend suite covers persisted session progress, idempotent answer submission,
+bounded follow-ups, completion and shared reports. CI runs backend coverage and
+the production frontend build from the repository root. On Linux/macOS:
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+alembic upgrade head
+python seed.py
+python -m pytest tests/ --cov=app --cov-report=term-missing
+uvicorn app.main:app --reload
+```
+
+Without a Groq key, text interviews use deterministic demo heuristics. These
+length-based scores do not measure technical correctness. Fallback feedback,
+turn decisions and final reports now explicitly disclose this, including when
+a configured provider fails. Audio transcription requires a working Groq key.
+Provider calls in automated tests are mocked; live model quality and live audio
+accuracy have not been validated by this readiness pass.
+
+Readiness validation: 19 backend tests passed; statement coverage 654/738 (88.62%, rounded to 89%). Frontend production build passed.

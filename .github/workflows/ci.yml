@@ -38,3 +38,44 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci && npm install --no-save playwright@1.62.1 && npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - name: Start demo services
+        env:
+          GROQ_API_KEY: ''
+          DATABASE_URL: sqlite:////tmp/interview-smoke.db
+        run: |
+          cd backend
+          alembic upgrade head
+          python seed.py
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+          cd ../frontend
+          npm run preview -- --host 127.0.0.1 --port 5173 > /tmp/frontend.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl -fsS http://localhost:8000/health && curl -fsS http://localhost:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: node scripts/smoke.mjs
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: demo-browser-evidence
+          path: |
+            frontend/screenshots/
+            /tmp/backend.log
+            /tmp/frontend.log

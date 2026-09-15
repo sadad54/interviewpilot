@@ -191,3 +191,5 @@ Provider calls in automated tests are mocked; live model quality and live audio
 accuracy have not been validated by this readiness pass.
 
 Readiness validation: 19 backend tests passed; statement coverage 654/738 (88.62%, rounded to 89%). Frontend production build passed.
+
+The frontend defaults to `http://localhost:8000`; set `VITE_API_URL` before building for a different backend. Browser CI runs a real SQLite-backed text interview in demo mode and uploads screenshots; it does not call Groq.

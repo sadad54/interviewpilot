@@ -141,7 +141,7 @@ def _fallback_evaluation(answer: str) -> EvaluationResult:
             depth=min(9, base + (1 if words >= 70 else 0)),
         ),
         overall_score=float(base),
-        feedback="The answer was recorded for the final review. Add concrete reasoning, trade-offs, and measurable outcomes to make it stronger.",
+        feedback="Demo heuristic: AI evaluation was unavailable. This score is based on answer length and does not assess technical correctness.",
     )
 
 
@@ -212,15 +212,18 @@ def build_report(db: DBSession, session: InterviewSession) -> SessionReport:
     overall = round(sum(competency_scores.values()) / len(competency_scores), 1) if competency_scores else 0.0
     unique_strengths = list(dict.fromkeys(strengths))[:4] or ["Completed a structured interview under realistic conditions"]
     unique_improvements = list(dict.fromkeys(improvements))[:4] or ["Use more specific examples and measurable outcomes"]
+    fallback_count = sum(1 for r in responses if r.evaluation and r.evaluation.feedback.startswith("Demo heuristic:"))
+    score_notice = (f" Includes {fallback_count} demo heuristic score(s); these do not assess technical correctness." if fallback_count else "")
     report = SessionReport(
         session_id=session.id,
         overall_score=overall,
         competency_scores=competency_scores,
         strengths=unique_strengths,
         improvements=unique_improvements,
-        summary=f"Completed {len(responses)} interview turns across {len(competency_scores)} competency areas.",
+        summary=f"Completed {len(responses)} interview turns across {len(competency_scores)} competency areas." + score_notice,
         evidence=evidence,
         coverage_summary={
+            "demo_heuristic_scores": fallback_count,
             "planned": session.plan_summary.get("categories", []),
             "covered": list(competency_scores.keys()),
             "primary_answered": len([r for r in responses if r.question.kind == "primary"]),
@@ -264,8 +267,11 @@ def submit_interview_answer(
         logger.warning("evaluation_fallback session=%s question=%s error=%s", session.public_id, question.id, exc)
         result = _fallback_evaluation(answer_text)
 
+    used_fallback = result.feedback.startswith("Demo heuristic:")
     allow_probe = question.kind == "primary" and not question.follow_ups
     decision = _turn_decision(client, question, answer_text, allow_probe)
+    if used_fallback:
+        decision.decision_summary = "Demo heuristic score; AI evaluation unavailable. " + decision.decision_summary
     evaluation = Evaluation(
         response_id=response.id,
         overall_score=result.overall_score,

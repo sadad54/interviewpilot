@@ -110,3 +110,24 @@ def test_early_completion_requires_an_answer_and_builds_partial_report(client):
     finished = client.post(f"/sessions/{public_id}/complete")
     assert finished.status_code == 200
     assert finished.json()["coverage_summary"]["primary_answered"] == 1
+
+
+def test_demo_scores_are_disclosed_in_report(client):
+    public_id, state = _create_and_start(client)
+    answered = _answer(client, public_id, state["current_question"]["id"])
+    assert "Demo heuristic" in answered.json()["decision_summary"]
+    report = client.post(f"/sessions/{public_id}/complete").json()
+    assert report["coverage_summary"]["demo_heuristic_scores"] == 1
+    assert "do not assess technical correctness" in report["summary"]
+
+
+def test_stateful_audio_without_provider_does_not_advance(client):
+    public_id, state = _create_and_start(client)
+    response = client.post(
+        f"/sessions/{public_id}/answers/audio",
+        data={"question_id": state["current_question"]["id"], "client_request_id": str(uuid4())},
+        files={"audio": ("answer.webm", b"fixture-audio", "audio/webm")},
+    )
+    assert response.status_code == 503
+    resumed = client.get(f"/sessions/{public_id}/state").json()
+    assert resumed["progress"]["answered_turns"] == 0

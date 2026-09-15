@@ -26,7 +26,7 @@ def generate_followup(client: Groq, question_text: str, answer_text: str)-> dict
         model=FOLLOWUP_MODEL,
         messages=[
             {"role":"system", "content":FOLLOWUP_SYSTEM_PROMPT},
-            {"role":"user", "content":f"original question: {question_text}\n\Candidate's answer:{answer_text}"},
+            {"role":"user", "content":f"original question: {question_text}\nCandidate's answer:{answer_text}"},
         ],
         temperature=0.4,
         response_format={"type":"json_object"},

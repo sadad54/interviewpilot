@@ -2,7 +2,7 @@ import axios, { type AxiosResponse } from "axios";
 import type { Session, Question, Response, Evaluation, FollowUp, InterviewState, InterviewAdvance, SessionReport } from "./types";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
   headers: { "Content-Type": "application/json" },
 });
 
